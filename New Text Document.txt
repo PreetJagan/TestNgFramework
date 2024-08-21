@@ -1,0 +1,479 @@
+Test class- 
+
+package qa.tests;
+
+import base.baseTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.Test;
+import pageEvents.LoginPageEvents;
+import utils.ElementFetch;
+import utils.constants;
+
+public class LoginPage extends baseTest {
+    ElementFetch ele = new ElementFetch();
+    LoginPageEvents loginpage = new LoginPageEvents();
+
+    @Test(description = "Verify Conn Login page is loaded completely")
+    public void VerifyloginPageLoad() {
+        loginpage.verifyIfLoginPageIsLoaded();
+
+        logger.info("Verify that Conn Logo is displayed in Login Page");
+        loginpage.verifyIfConnLogoIsVisible();
+
+        logger.info("Verify that Conn Title is displayed in Login Page");
+        loginpage.verifyIfConnTitleIsPresent();
+
+        logger.info("Verify that no link on the login page is broken");
+        loginpage.verifyAllLinks();
+    }
+    @Test(description = "Masking and unmasking of password")
+    public void maskingUnmasking() {
+        loginpage.verifyPasswordMaskingAndUnMasking();
+    }
+
+    @Test(description = "Verify toaster is shown when logging in with incorrect credentials")
+    public void VerifyIncorrectLogin() {
+        loginpage.loginWithIncorrectCredentials();
+    }
+
+    @Test(description = "Verify Remember Me functionality")
+    public void verifyRememberMeFunctionality() {
+        loginpage.verifyRememberMeFunctionality();
+    }
+
+    @Test(description = "Verify Active Conn is able to login successfully")
+    public void VerfiyActiveConnLogin() {
+        loginpage.ActiveConnLogin(constants.testConnPassword, constants.testActiveConnEmail);
+    }
+
+    @Test(description ="Verify InActive Conn is unable to login")
+    public void VerifyInActiveConnLogin() {
+        loginpage.DeactivatedConnLogin(constants.testConnPassword, constants.testDeactiveConnEmail);
+
+    }
+
+    @Test(description ="Verify Deleted Conn is unable to login")
+    public void VerifyDeletedConnLogin() {
+        loginpage.DeletedConnLogin(constants.testConnPassword, constants.testDeletedConnEmail);
+
+    }
+    @Test(description ="Verify Login to application by Support Role and it Access")
+    public void VerifySupportLogin() {
+        loginpage.loginWithSupport();
+        loginpage.merchantMenuOptionsInSupport();
+    }
+
+    @Test(description ="Verify Login to application by Legal Role and it Access")
+    public void VerifyLegalLogin() {
+        loginpage.loginWithLegal();
+        loginpage.ConnMenuOptionsInLegal();
+    }
+}
+
+
+
+
+Uske corresponding EventClass- 
+
+package pageEvents;
+
+import base.baseTest;
+import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import pageObjects.CustomerPageElements;
+import pageObjects.LoginPageElements;
+import utils.ElementFetch;
+import utils.constants;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.Duration;
+import java.util.*;
+import java.io.IOException;
+
+import static base.baseTest.driver;
+import static base.baseTest.logger;
+
+import java.util.function.Supplier;
+
+public class LoginPageEvents {
+    ElementFetch ele = new ElementFetch();
+
+    public void verifyIfLoginPageIsLoaded() {
+
+        logger.info("verify if all the elements are loaded");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(LoginPageElements.loginButton)));
+        Assert.assertTrue(ele.getWebElements("XPATH", LoginPageElements.loginButton).size() > 0, "Element not found");
+    }
+
+
+    public void verifyIfConnTitleIsPresent() {
+        String expectedTitle = "GetDandy | Login";
+        String actualTitle = driver.getTitle();
+
+        logger.info("check for 'GetDandy | Login' title in Login page");
+        Assert.assertEquals(expectedTitle, actualTitle, "Page title is not GetDandy | Login");
+        System.out.println("Page Title: " + actualTitle);
+    }
+
+    //Opening the signupPage
+    public void CreateAccountLink() {
+        ele.getWebElement("XPATH", LoginPageElements.createAccount).click();
+    }
+
+    public void verifyIfConnLogoIsVisible() {
+        Assert.assertTrue(ele.getWebElement("XPATH", LoginPageElements.ConnLogo).isDisplayed(), "Logo not found");
+    }
+
+    public void verifyPasswordMaskingAndUnMasking() {
+        // Locate the password input field
+        WebElement passwordField = ele.getWebElement("XPATH", LoginPageElements.passwordField);
+
+        logger.info("Enter password in password field");
+        String samplePassword = "samplePassword";
+        passwordField.sendKeys(samplePassword);
+
+        // Retrieve the value of the 'type' attribute of the password field
+        String fieldType = passwordField.getAttribute("type");
+
+        logger.info("check if the password field is masked");
+        Assert.assertEquals("password", fieldType.toLowerCase(), "Password is not masked");
+
+        logger.info("unmask the password");
+        WebElement unmaskButton = ele.getWebElement("XPATH", LoginPageElements.passwordUnMasking);
+        unmaskButton.click();
+
+        logger.info("Verify if the password is unmasked");
+        String unmaskedPassword = passwordField.getAttribute("value");
+        Assert.assertEquals(samplePassword, unmaskedPassword, "Password is not unmasked");
+
+        passwordField.clear();
+
+    }
+
+    public void AdminLogin() {
+
+        logger.info("Enter correct Admin login credentials in email and password field");
+        WebElement emailField = ele.getWebElement("XPATH", LoginPageElements.emailAddress);
+        WebElement passwordField = ele.getWebElement("XPATH", LoginPageElements.passwordField);
+
+        passwordField.clear();
+        passwordField.click();
+        passwordField.sendKeys(constants.password);
+        emailField.sendKeys(constants.email);
+
+
+        ele.getWebElement("XPATH", LoginPageElements.anyWhereOnLoginPage).click();
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebElement loginButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(LoginPageElements.loginButton)));
+
+        logger.info("Click on login button");
+        loginButton.click();
+    }
+
+    public void ActiveConnLogin(String password, String email) {
+
+        logger.info("Enter correct Conn login credentials in email and password field");
+        WebElement emailField = ele.getWebElement("XPATH", LoginPageElements.emailAddress);
+        WebElement passwordField = ele.getWebElement("XPATH", LoginPageElements.passwordField);
+
+        passwordField.clear();
+        passwordField.click();
+        passwordField.sendKeys(constants.password);
+        emailField.sendKeys(constants.email);
+
+
+        ele.getWebElement("XPATH", LoginPageElements.anyWhereOnLoginPage).click();
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebElement loginButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(LoginPageElements.loginButton)));
+
+        logger.info("Click on login button");
+        loginButton.click();
+
+        logger.info("Search Merchant by email");
+        WebElement dropdownElement = ele.getWebElement("CSS", LoginPageElements.searchByDropdown);
+        Select dropdown = new Select(dropdownElement);
+        dropdown.selectByVisibleText("Email");
+
+        WebElement merchantSearch = ele.getWebElement("XPATH", LoginPageElements.merchantSearch);
+        merchantSearch.sendKeys(email);
+
+        WebElement searchResultByEmail = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(LoginPageElements.searchResultByEmail)));
+        Assert.assertTrue(searchResultByEmail.isDisplayed(), "searching doesn't completes");
+
+        logger.info("Verify if Conn is Active");
+
+        WebElement activeLabel = ele.getWebElement("CSS", LoginPageElements.activeLabel);
+        String labelText = activeLabel.getText();
+        Assert.assertTrue(labelText.contains("Active"), Conn is not active");
+
+        logger.info("logout from Admin");
+        ele.getWebElement("CSS", LoginPageElements.logoutButton).click();
+
+        logger.info("Login with Active Merchant credentials");
+        ele.getWebElement("XPATH", LoginPageElements.emailAddress).sendKeys(email);
+        ele.getWebElement("XPATH", LoginPageElements.passwordField).sendKeys(password);
+
+        ele.getWebElement("XPATH", LoginPageElements.anyWhereOnLoginPage).click();
+        ele.getWebElement("XPATH", LoginPageElements.loginButton).click();
+
+
+        logger.info("check if logout button is present after getting logged in");
+        WebElement logoutButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(LoginPageElements.logoutButton)));
+        Assert.assertTrue(logoutButton.isDisplayed(), "Login failed, logout button is not visible");
+    }
+
+    public void DeactivatedConnLogin(String password, String email) {
+
+        logger.info("Enter correct Admin login credentials in email and password field");
+        WebElement emailField = ele.getWebElement("XPATH", LoginPageElements.emailAddress);
+        WebElement passwordField = ele.getWebElement("XPATH", LoginPageElements.passwordField);
+
+        passwordField.clear();
+        passwordField.click();
+        passwordField.sendKeys(constants.password);
+        emailField.sendKeys(constants.email);
+
+
+        ele.getWebElement("XPATH", LoginPageElements.anyWhereOnLoginPage).click();
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebElement loginButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(LoginPageElements.loginButton)));
+
+        logger.info("Click on login button");
+        loginButton.click();
+
+        logger.info("Search Conn by email");
+        WebElement dropdownElement = ele.getWebElement("CSS", LoginPageElements.searchByDropdown);
+        Select dropdown = new Select(dropdownElement);
+        dropdown.selectByVisibleText("Email");
+
+        WebElement ConnSearch = ele.getWebElement("XPATH", LoginPageElements.ConnSearch);
+        ConnSearch.sendKeys(email);
+
+        WebElement searchResultByEmail = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(LoginPageElements.searchResultByEmail)));
+        Assert.assertTrue(searchResultByEmail.isDisplayed(), "searching doesn't completes");
+
+        logger.info("Verify if merchant is InActive");
+        WebElement inActiveLabel = ele.getWebElement("XPATH", LoginPageElements.inActiveLabel);
+        String labelText = inActiveLabel.getText();
+
+        Assert.assertTrue(labelText.contains("Inactive"), "Conn is not inactive");
+
+        logger.info("logout from Conn");
+        ele.getWebElement("CSS", LoginPageElements.logoutButton).click();
+
+        logger.info("Login with inActive Conn credentials");
+        ele.getWebElement("XPATH", LoginPageElements.emailAddress).sendKeys(email);
+        ele.getWebElement("XPATH", LoginPageElements.passwordField).sendKeys(password);
+
+        ele.getWebElement("XPATH", LoginPageElements.anyWhereOnLoginPage).click();
+        ele.getWebElement("XPATH", LoginPageElements.loginButton).click();
+
+        logger.info("check if the toaster message is displayed for incorrect credentials");
+        WebElement toasterMessage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(LoginPageElements.toasterMessage)));
+        Assert.assertTrue(toasterMessage.isDisplayed(), "Toaster message not displayed for incorrect credentials");
+        System.out.println("Toaster message: " + toasterMessage.getText());
+    }
+
+}
+
+
+
+
+
+
+
+
+
+package base;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.time.Duration;
+
+import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.testng.ITestResult;
+import org.testng.annotations.*;
+
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.Status;
+import com.aventstack.extentreports.markuputils.ExtentColor;
+import com.aventstack.extentreports.markuputils.MarkupHelper;
+import com.aventstack.extentreports.MediaEntityBuilder;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.aventstack.extentreports.reporter.configuration.Theme;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+import utils.constants;
+
+public class baseTest {
+    public static WebDriver driver;
+    public static ExtentReports extent;
+    public static ExtentSparkReporter sparkReporter;
+    public static ExtentTest logger;
+
+
+    @BeforeSuite
+    public void beforeSuite() {
+        sparkReporter = new ExtentSparkReporter(System.getProperty("user.dir") + File.separator + "reports" + File.separator + "ConnExtentReport.html");
+        extent = new ExtentReports();
+        extent.attachReporter(sparkReporter);
+        sparkReporter.config().setTheme(Theme.DARK);
+        extent.setSystemInfo("Company", "Conn");
+        extent.setSystemInfo("Responsible", "QA Team");
+        sparkReporter.config().setDocumentTitle("Conn Automation Report");
+        sparkReporter.config().setReportName("Conn Automation Test Results by QA Team");
+
+        // Inject custom JavaScript to change the logo
+        String customJS = "document.addEventListener('DOMContentLoaded', function() {" +
+                "   console.log('DOM fully loaded and parsed');" +
+                "   var logo = document.querySelector('.logo');" +
+                "   if (logo) {" +
+                "       console.log('Logo element found');" +
+                "       logo.style.backgroundImage = 'url(\\\"../logos/logo4.png\\\")';" +
+                "       logo.style.backgroundSize = 'contain';" +
+                "       logo.style.backgroundRepeat = 'no-repeat';" +
+                "       logo.style.width = '30px';" +  // Set the desired width
+                "       logo.style.height = '30px';" + // Set the desired height
+                "       logo.style.marginRight = '15px';" +
+                "   } else {" +
+                "       console.log('Logo element not found');" +
+                "   }" +
+                "   var link = document.querySelector('link[rel*=\"icon\"]') || document.createElement('link');" +
+                "   link.type = 'image/png';" +
+                "   link.rel = 'shortcut icon';" +
+                "   link.href = '../logos/logo4.png';" +
+                "   document.getElementsByTagName('head')[0].appendChild(link);" +
+                "});";
+        sparkReporter.config().setJs(customJS);
+    }
+
+    // Helper method to get the path of the logo
+//    private String getLogoPath() {
+//        return  System.getProperty("user.dir").replace("\\", "/") + "/logos/JPG-05.jpg";
+//    }
+
+    @BeforeMethod
+    @Parameters({"browser", "headless"})
+    public void beforeTestMethod(String browser, @Optional("false") String headless, Method testMethod) {
+        // Retrieve the description from the @Test annotation
+        Test testAnnotation = testMethod.getAnnotation(Test.class);
+        String description = testAnnotation.description();
+
+        // Create a test instance with description
+        logger = extent.createTest(description);
+
+        // Convert headless string parameter to boolean
+        boolean isHeadless = Boolean.parseBoolean(headless);
+
+        setupDriver(browser, isHeadless);
+        driver.manage().window().maximize();
+        driver.get(constants.url);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
+
+//         Set logger instance for the test method
+//        try {
+//            ((baseTest) testMethod.getDeclaringClass().newInstance()).setLogger(logger);
+//        } catch (InstantiationException | IllegalAccessException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+
+//     Setter method for logger
+//    public void setLogger(ExtentTest logger) {
+//        this.logger = logger;
+//    }
+
+    @AfterMethod
+    public void afterMethod(ITestResult result) throws IOException {
+        if (result.getStatus() == ITestResult.FAILURE) {
+            String screenshotPath = captureScreenshot(result.getMethod().getMethodName());
+            logger.log(Status.FAIL, MarkupHelper.createLabel(result.getName() + " - Test Case Failed", ExtentColor.RED));
+
+            String failureDetails = result.getThrowable().getMessage();
+            logger.fail("Failure Attachment " + failureDetails,
+                    MediaEntityBuilder.createScreenCaptureFromPath(screenshotPath).build());
+
+        } else if (result.getStatus() == ITestResult.SKIP) {
+            logger.log(Status.SKIP, MarkupHelper.createLabel(result.getName() + " - Test Case Skipped", ExtentColor.ORANGE));
+        } else if (result.getStatus() == ITestResult.SUCCESS) {
+            logger.log(Status.PASS, MarkupHelper.createLabel(result.getName() + " - Test Case PASS", ExtentColor.GREEN));
+        }
+        driver.quit();
+    }
+
+    @AfterSuite
+    public void afterSuite() 
+    {
+        extent.flush();
+    }
+
+    public void setupDriver(String browser, boolean headless) {
+        if (browser.equalsIgnoreCase("chrome")) {
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--disable-extensions");
+            options.addArguments("--disable-infobars");
+            options.addArguments("--disable-notifications");
+            options.addArguments("--disable-autofill");
+            if (headless) {
+                options.addArguments("--headless=new");
+                options.addArguments("--disable-gpu"); // for Windows OS
+                options.addArguments("--no-sandbox"); // Bypass OS security model
+                options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
+            }
+            driver = new ChromeDriver(options);
+        } else if (browser.equalsIgnoreCase("firefox")) {
+            WebDriverManager.firefoxdriver().setup();
+            FirefoxOptions options = new FirefoxOptions();
+            options.addArguments("--disable-notifications");
+            if (headless) {
+                options.addArguments("--headless");
+            }
+            driver = new FirefoxDriver(options);
+        } else if (browser.equalsIgnoreCase("edge")) {
+            WebDriverManager.edgedriver().setup();
+            EdgeOptions options = new EdgeOptions();
+            options.addArguments("--disable-notifications");
+            if (headless) {
+                options.addArguments("headless");
+            }
+            driver = new EdgeDriver(options);
+        }
+        driver.manage().window().maximize();
+        driver.get(constants.url);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
+    }
+    public String captureScreenshot(String methodName) {
+        String screenshotPath = System.getProperty("user.dir") + File.separator + "reports" + File.separator + "screenshots" +methodName + ".png";
+        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        try {
+            FileUtils.copyFile(screenshot, new File(screenshotPath));
+            System.out.println("Screenshot saved at: " + screenshotPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "screenshots/" + methodName + ".png";
+    }
+}
